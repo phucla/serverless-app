@@ -14,7 +14,13 @@ import {
   Loader,
 } from "semantic-ui-react";
 
-import { createTodo, deleteTodo, getTodos, patchTodo } from "../api/todos-api";
+import {
+  createTodo,
+  deleteTodo,
+  getTodos,
+  patchTodo,
+  sortTodos,
+} from "../api/todos-api";
 import Auth from "../auth/Auth";
 import { Todo } from "../types/Todo";
 
@@ -27,6 +33,8 @@ interface TodosState {
   todos: Todo[];
   newTodoName: string;
   loadingTodos: boolean;
+  sortField: string;
+  sortDirection: string;
 }
 
 export class Todos extends React.PureComponent<TodosProps, TodosState> {
@@ -34,6 +42,8 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     todos: [],
     newTodoName: "",
     loadingTodos: true,
+    sortField: "",
+    sortDirection: "",
   };
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +99,23 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     }
   };
 
+  onTodosSort = async (field: string) => {
+    const { sortDirection } = this.state;
+
+    this.setState({
+      sortDirection: sortDirection === "asc" ? "desc" : "asc",
+      loadingTodos: true,
+    });
+    const todos = await sortTodos(
+      this.props.auth.getIdToken(),
+      field,
+      sortDirection
+    );
+    if (todos) {
+      this.setState({ todos: todos, loadingTodos: false });
+    }
+  };
+
   async componentDidMount() {
     try {
       const todos = await getTodos(this.props.auth.getIdToken());
@@ -115,26 +142,45 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   renderCreateTodoInput() {
     return (
-      <Grid.Row>
-        <Grid.Column width={16}>
-          <Input
-            action={{
-              color: "teal",
-              labelPosition: "left",
-              icon: "add",
-              content: "New task",
-              onClick: this.onTodoCreate,
-            }}
-            fluid
-            actionPosition="left"
-            placeholder="To change the world..."
-            onChange={this.handleNameChange}
-          />
-        </Grid.Column>
-        <Grid.Column width={16}>
-          <Divider />
-        </Grid.Column>
-      </Grid.Row>
+      <Grid padded>
+        <Grid.Row verticalAlign="bottom">
+          <Grid.Column width={14}>
+            <Input
+              action={{
+                color: "teal",
+                labelPosition: "left",
+                icon: "add",
+                content: "New task",
+                onClick: this.onTodoCreate,
+              }}
+              fluid
+              actionPosition="left"
+              placeholder="To change the world..."
+              onChange={this.handleNameChange}
+            />
+          </Grid.Column>
+          <Grid.Column width={2} floated="right">
+            <div>
+              Sort by:
+              <Button
+                icon
+                color={"blue"}
+                onClick={() => this.onTodosSort("dueDate")}
+              >
+                Due Date
+                <Icon
+                  name={`angle ${
+                    this.state.sortDirection === "asc" ? "up" : "down"
+                  }`}
+                />
+              </Button>
+            </div>
+          </Grid.Column>
+          <Grid.Column width={16}>
+            <Divider />
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
     );
   }
 
@@ -168,7 +214,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                   checked={todo.done}
                 />
               </Grid.Column>
-              <Grid.Column width={10} verticalAlign="middle">
+              <Grid.Column width={10} semantic-ui-react="middle">
                 {todo.name}
               </Grid.Column>
               <Grid.Column width={3} floated="right">
@@ -192,6 +238,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                   <Icon name="delete" />
                 </Button>
               </Grid.Column>
+
               {todo.attachmentUrl && (
                 <Image src={todo.attachmentUrl} size="small" wrapped />
               )}

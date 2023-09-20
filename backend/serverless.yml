@@ -47,7 +47,7 @@ custom:
     models:
       - name: TodoRequest
         contentType: application/json
-        schema: ${file(src/validators/create-todo.json)}
+        schema: ${file(models/create-todo-model.json)}
 configValidationMode: error
 functions:
   Auth:
