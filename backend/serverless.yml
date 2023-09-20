@@ -7,6 +7,9 @@ plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-plugin-tracing
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
+  - serverless-offline
 
 provider:
   name: aws
@@ -35,6 +38,16 @@ custom:
     lambdaPort: 5001
     tracing:
       port: 2000
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Todos API
+        description: Serverless application for todo app
+    models:
+      - name: TodoRequest
+        contentType: application/json
+        schema: ${file(src/validators/create-todo.json)}
 configValidationMode: error
 functions:
   Auth:
@@ -48,7 +61,7 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          # reqValidatorName: RequestQueryParamsValidator
+          reqValidatorName: RequestQueryParamsValidator
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -63,7 +76,12 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          # reqValidatorName: RequestBodyValidator
+          reqValidatorName: RequestBodyValidator
+          request:
+            schemas:
+              application/json: ${file(models/create-todo-model.json)}
+
+          
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -78,7 +96,7 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
-          # reqValidatorName: RequestBodyValidator
+          reqValidatorName: RequestBodyValidator
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -109,7 +127,7 @@ functions:
           path: todos/sort
           cors: true
           authorizer: Auth
-          # reqValidatorName: RequestQueryParamsValidator
+          reqValidatorName: RequestQueryParamsValidator
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -221,7 +239,7 @@ resources:
         RestApiId:
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
-        ValidateRequestParameters: false
+        ValidateRequestParameters: true
 
     RequestQueryParamsValidator:
       Type: AWS::ApiGateway::RequestValidator

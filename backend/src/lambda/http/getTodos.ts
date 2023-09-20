@@ -5,7 +5,7 @@ import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
 
 import { getUserId } from '../utils'
-import { getTodos } from '../../helpers/todos'
+import { getTodos } from '../../businessLogic/todos'
 
 // TODO: Get all TODO items for a current user
 export const handler = middy(
